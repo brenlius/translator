@@ -1,0 +1,85 @@
+﻿@using Translator.Design.Domain.Requests
+@using Translator.Design.Domain.Responses
+
+@page "/"
+@inject HttpClient Http
+
+<div class="d-flex justify-content-center mt-5">
+	<div style="width: 100%; max-width: 600px;">
+		<h3>Translator</h3>
+
+		<input @bind="input" class="form-control" placeholder="Enter Romaji here" />
+		<button class="btn btn-primary mt-2" @onclick="TranslateText" disabled="@isTranslating">
+			@(isTranslating ? "Translating..." : "Translate")
+		</button>
+
+		@if (isTranslating)
+		{
+			<p class="text-muted mt-3">Please wait, translating...</p>
+		}
+		else if (results != null)
+		{
+			<div class="mt-4">
+				<p><strong>Corrected (Romaji):</strong> @results.CorrectedRomaji</p>
+				<p><strong>English:</strong> @results.English</p>
+				<p><strong>Japanese:</strong> @results.Japanese</p>
+			</div>
+		}
+	</div>
+</div>
+
+@code {
+
+	#region Declations
+
+	private string input = string.Empty;
+	private bool isTranslating = false;
+
+	private TranslateRes? results;
+
+	#endregion Declarations
+
+	/// <summary>
+	///
+	/// </summary>
+	/// <returns></returns>
+	private async Task TranslateText()
+	{
+		isTranslating = true;
+		results = null;
+
+		try
+		{
+			TranslateReq request = new TranslateReq { Input = input };
+			var response = await Http.PostAsJsonAsync("api/translate", request);
+
+			if (response.IsSuccessStatusCode)
+			{
+				results = await response.Content.ReadFromJsonAsync<TranslateRes>();
+			}
+			else
+			{
+				results = new TranslateRes
+					{
+						CorrectedRomaji = "Translation not found.",
+						English = "Translation not found.",
+						Japanese = "Translation not found."
+					};
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"API call failed: {ex.Message}");
+			results = new TranslateRes
+				{
+					CorrectedRomaji = "(exception)",
+					English = "(exception)",
+					Japanese = "(exception)"
+				};
+		}
+		finally
+		{
+			isTranslating = false;
+		}
+	}
+}

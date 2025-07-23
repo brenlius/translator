@@ -1,0 +1,11 @@
+@Translator.API_HostAddress = http://localhost:5155
+
+POST {{Translator.API_HostAddress}}/api/translate/
+Content-Type: application/json
+Accept: application/json
+
+{
+  "input": "Irashai masu"
+}
+
+###
