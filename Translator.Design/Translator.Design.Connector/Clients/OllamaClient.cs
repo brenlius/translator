@@ -1,6 +1,5 @@
-﻿using Microsoft.Extensions.Options;
-using OllamaSharp;
-using OllamaSharp.Models;
+﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Options;
 using Translator.Design.Connector.Configs;
 
 namespace Translator.Design.Connector.Clients
@@ -8,19 +7,19 @@ namespace Translator.Design.Connector.Clients
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="httpClient"></param>
+    /// <param name="chatClients"></param>
     /// <param name="options"></param>
-    public sealed class OllamaClient(HttpClient httpClient, IOptions<OllamaConfig> options)
+    public sealed class OllamaClient(ChatClients chatClients, IOptions<OllamaConfig> options)
     {
         #region Declarations
 
-        private readonly HttpClient _httpClient = httpClient;
+        private readonly IChatClient _chatClient = chatClients.Ollama;
         private readonly OllamaConfig _routerConfig = options.Value;
 
         #endregion Declarations
 
         /// <summary>
-        /// ption>
+        /// 
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
@@ -28,23 +27,13 @@ namespace Translator.Design.Connector.Clients
         {
             #region Declarations
 
-            string tokenRes = string.Empty;
             string prompt = (_routerConfig.Prompt ?? string.Empty).Replace("{input}",
                 input, StringComparison.OrdinalIgnoreCase);
 
             #endregion Declarations
 
-            //create the ollama api client
-            OllamaApiClient client = new(_httpClient)
-            { SelectedModel = _routerConfig.Model };
-
-            await foreach (GenerateResponseStream? token in client.GenerateAsync(prompt))
-            {
-                if (token?.Response != null)
-                    tokenRes += token.Response;
-            }
-
-            return tokenRes;
+            ChatResponse response = await _chatClient.GetResponseAsync(prompt);
+            return response.Messages.FirstOrDefault()?.Text ?? "No response.";
         }
     }
 }

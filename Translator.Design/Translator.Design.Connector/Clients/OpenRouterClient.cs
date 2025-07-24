@@ -7,13 +7,13 @@ namespace Translator.Design.Connector.Clients
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="chatClient"></param>
+    /// <param name="chatClients"></param>
     /// <param name="options"></param>
-    public sealed class OpenRouterClient(IChatClient chatClient, IOptions<OpenRouterConfig> options)
+    public sealed class OpenRouterClient(ChatClients chatClients, IOptions<OpenRouterConfig> options)
     {
         #region Declarations
 
-        private readonly IChatClient _chatClient = chatClient;
+        private readonly IChatClient _chatClient = chatClients.OpenRouter;
         private readonly OpenRouterConfig _routerConfig = options.Value;
 
         #endregion Declarations
@@ -29,12 +29,12 @@ namespace Translator.Design.Connector.Clients
         {
             List<ChatMessage> messages =
             [
-                new(Microsoft.Extensions.AI.ChatRole.System, _routerConfig.Prompt),
-                new(Microsoft.Extensions.AI.ChatRole.User, input)
+                new(ChatRole.System, _routerConfig.Prompt),
+                new(ChatRole.User, input)
             ];
 
             ChatResponse response = await _chatClient.GetResponseAsync(messages);
-            return response.Messages.FirstOrDefault()?.Text ?? "No response";
+            return response.Messages.FirstOrDefault()?.Text ?? "No response.";
         }
 
         #endregion Methods

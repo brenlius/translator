@@ -3,6 +3,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OllamaSharp;
 using OpenAI.Chat;
 using Translator.Design.Application.IRepositories;
 using Translator.Design.Connector.Clients;
@@ -24,30 +25,39 @@ namespace Translator.Design.Infrastracture.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection RegisterExternalServices(this IServiceCollection services, IConfiguration config)
         {
-            // Ollama
+            // Config bindings
             services.Configure<OllamaConfig>(config.GetSection("Ollama"));
-            services.AddHttpClient<OllamaClient>((sp, client) =>
+            services.Configure<OpenRouterConfig>(config.GetSection("OpenRouter"));
+
+            // Register ChatClients manually
+            services.AddScoped<ChatClients>(serviceProvider =>
             {
-                OllamaConfig ollamaConfig = sp.GetRequiredService<IOptions<OllamaConfig>>().Value;
-                client.BaseAddress = new Uri(ollamaConfig.BaseAddress);
+                // Get configurations
+                OllamaConfig ollamaConfig = serviceProvider.GetRequiredService<IOptions<OllamaConfig>>().Value;
+                OpenRouterConfig openRouterConfig = serviceProvider.GetRequiredService<IOptions<OpenRouterConfig>>().Value;
+
+                // Create chat clients
+                IChatClient ollama = new OllamaApiClient(ollamaConfig.BaseAddress, ollamaConfig.Model);
+                IChatClient openRouter = new ChatClient(openRouterConfig.Model, new ApiKeyCredential(openRouterConfig.ApiKey), new()
+                { Endpoint = new Uri(openRouterConfig.BaseAddress) }).AsIChatClient();
+
+                return new ChatClients
+                {
+                    Ollama = ollama,
+                    OpenRouter = openRouter
+                };
             });
 
-            // Open Router
-            services.Configure<OpenRouterConfig>(config.GetSection("OpenRouter"));
-            services.AddChatClient(serviceProvider =>
+            // Add embedding OpenRouter client
+            services.AddEmbeddingGenerator(sp =>
             {
-                OpenRouterConfig openRouterConfig = serviceProvider.GetRequiredService<IOptions<OpenRouterConfig>>().Value;
-                return new ChatClient(openRouterConfig.Model, new ApiKeyCredential(openRouterConfig.ApiKey), new()
-                { Endpoint = new Uri(openRouterConfig.BaseAddress) }).AsIChatClient();
-            });
-            services.AddEmbeddingGenerator(serviceProvider =>
-            {
-                OpenRouterConfig openRouterConfig = serviceProvider.GetRequiredService<IOptions<OpenRouterConfig>>().Value;
+                OpenRouterConfig openRouterConfig = sp.GetRequiredService<IOptions<OpenRouterConfig>>().Value;
                 return new OpenAI.Embeddings.EmbeddingClient(openRouterConfig.Model, openRouterConfig.ApiKey)
                     .AsIEmbeddingGenerator();
             });
 
             services.AddScoped<ITranslateRepository, TranslateRepository>();
+            services.AddScoped<OllamaClient>();
             services.AddScoped<OpenRouterClient>();
 
             return services;
