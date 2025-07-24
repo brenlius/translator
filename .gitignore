@@ -1,0 +1,8 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/Translator.API/Translator.API.csproj.user
+/Translator.Page/Translator.Page.csproj.user
+/Translator.slnLaunch.user

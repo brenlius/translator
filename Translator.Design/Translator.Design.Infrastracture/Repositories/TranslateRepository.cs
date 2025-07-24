@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
-using OllamaSharp;
-using OllamaSharp.Models;
 using Translator.Design.Application.IRepositories;
+using Translator.Design.Connector.Clients;
 using Translator.Design.Domain.Responses;
 
 namespace Translator.Design.Infrastracture.Repositories
@@ -9,45 +8,20 @@ namespace Translator.Design.Infrastracture.Repositories
     /// <summary>
     /// 
     /// </summary>
-    public sealed class TranslateRepository : ITranslateRepository
+    /// <remarks>
+    /// 
+    /// </remarks>
+    /// <param name="ollamaClient"></param>
+    /// <param name="openRouterClient"></param>
+    public sealed class TranslateRepository(OllamaClient ollamaClient, OpenRouterClient openRouterClient, IConfiguration config) : ITranslateRepository
     {
         #region Declarations
 
-        private readonly OllamaApiClient _client;
-        private readonly IConfiguration _configuration;
+        private readonly OllamaClient _ollamaClient = ollamaClient;
+        private readonly OpenRouterClient _openRouterClient = openRouterClient;
+        private readonly string _provider = config["TranslationProvider"] ?? string.Empty;
 
         #endregion Declarations
-
-        #region Constructors
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="configuration"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        public TranslateRepository(IConfiguration configuration)
-        {
-            //instantiate configuration
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-
-            //set the ollama configuration
-            string baseUrl = configuration["Ollama:BaseUrl"] ?? string.Empty;
-            string selectedModel = configuration["Ollama:SelectedModel"] ?? string.Empty;
-            int timeout = Convert.ToInt32(configuration["Ollama:Timeout"] ?? "1");
-
-            //create an http client
-            HttpClient httpClient = new()
-            {
-                BaseAddress = new Uri(baseUrl),
-                Timeout = TimeSpan.FromMinutes(timeout)
-            };
-
-            //create the ollama api client
-            _client = new OllamaApiClient(httpClient)
-            { SelectedModel = selectedModel };
-        }
-
-        #endregion Constructors
 
         #region Public Methods
 
@@ -56,21 +30,30 @@ namespace Translator.Design.Infrastracture.Repositories
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public async Task<TranslateRes> Translate(string input)
         {
-            #region variables
+            #region Variables
 
-            string tokenRes = string.Empty;
-            string prompt = (_configuration["Ollama:Prompt"] ?? string.Empty)
-                .Replace("{input}", input, StringComparison.OrdinalIgnoreCase);
+            string? tokenRes;
 
-            #endregion variables
+            #endregion Variables
 
-            await foreach (GenerateResponseStream? token in _client.GenerateAsync(prompt))
+            switch (_provider.ToLowerInvariant())
             {
-                if (token?.Response != null)
-                    tokenRes += token.Response;
+                case "ollama":
+                    tokenRes = await _ollamaClient.Translate(input);
+                    break;
+                case "openrouter":
+                    tokenRes = await _openRouterClient.Translate(input);
+                    break;
+                default:
+                    tokenRes = await _openRouterClient.Translate(input);
+                    break;
             }
+
+            if (string.IsNullOrEmpty(tokenRes))
+                throw new ArgumentException("Translation not found.", nameof(input));
 
             return ParseResults(tokenRes);
         }
