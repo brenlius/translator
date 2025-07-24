@@ -8,11 +8,9 @@ namespace Translator.Design.Infrastracture.Repositories
     /// <summary>
     /// 
     /// </summary>
-    /// <remarks>
-    /// 
-    /// </remarks>
     /// <param name="ollamaClient"></param>
     /// <param name="openRouterClient"></param>
+    /// <param name="config"></param>
     public sealed class TranslateRepository(OllamaClient ollamaClient, OpenRouterClient openRouterClient, IConfiguration config) : ITranslateRepository
     {
         #region Declarations

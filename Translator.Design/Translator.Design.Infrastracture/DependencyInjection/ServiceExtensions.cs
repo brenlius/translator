@@ -1,7 +1,9 @@
-﻿using System.Net.Http.Headers;
+﻿using System.ClientModel;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OpenAI.Chat;
 using Translator.Design.Application.IRepositories;
 using Translator.Design.Connector.Clients;
 using Translator.Design.Connector.Configs;
@@ -15,7 +17,7 @@ namespace Translator.Design.Infrastracture.DependencyInjection
     public static class ServiceExtensions
     {
         /// <summary>
-        /// /
+        /// 
         /// </summary>
         /// <param name="services"></param>
         /// <param name="config"></param>
@@ -32,16 +34,21 @@ namespace Translator.Design.Infrastracture.DependencyInjection
 
             // Open Router
             services.Configure<OpenRouterConfig>(config.GetSection("OpenRouter"));
-            services.AddHttpClient<OpenRouterClient>((sp, client) =>
+            services.AddChatClient(serviceProvider =>
             {
-                OpenRouterConfig routerConfig = sp.GetRequiredService<IOptions<OpenRouterConfig>>().Value;
-                client.BaseAddress = new Uri(routerConfig.BaseAddress);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", routerConfig.ApiKey);
-                client.DefaultRequestHeaders.Add("HTTP-Referer", routerConfig.Referer);
-                client.DefaultRequestHeaders.Add("X-Title", routerConfig.Title);
+                OpenRouterConfig openRouterConfig = serviceProvider.GetRequiredService<IOptions<OpenRouterConfig>>().Value;
+                return new ChatClient(openRouterConfig.Model, new ApiKeyCredential(openRouterConfig.ApiKey), new()
+                { Endpoint = new Uri(openRouterConfig.BaseAddress) }).AsIChatClient();
+            });
+            services.AddEmbeddingGenerator(serviceProvider =>
+            {
+                OpenRouterConfig openRouterConfig = serviceProvider.GetRequiredService<IOptions<OpenRouterConfig>>().Value;
+                return new OpenAI.Embeddings.EmbeddingClient(openRouterConfig.Model, openRouterConfig.ApiKey)
+                    .AsIEmbeddingGenerator();
             });
 
-            services.AddSingleton<ITranslateRepository, TranslateRepository>();
+            services.AddScoped<ITranslateRepository, TranslateRepository>();
+            services.AddScoped<OpenRouterClient>();
 
             return services;
         }

@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 using Translator.Design.Connector.Configs;
 
@@ -8,13 +7,13 @@ namespace Translator.Design.Connector.Clients
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="httpClient"></param>
+    /// <param name="chatClient"></param>
     /// <param name="options"></param>
-    public sealed class OpenRouterClient(HttpClient httpClient, IOptions<OpenRouterConfig> options)
+    public sealed class OpenRouterClient(IChatClient chatClient, IOptions<OpenRouterConfig> options)
     {
         #region Declarations
 
-        private readonly HttpClient _httpClient = httpClient;
+        private readonly IChatClient _chatClient = chatClient;
         private readonly OpenRouterConfig _routerConfig = options.Value;
 
         #endregion Declarations
@@ -26,29 +25,16 @@ namespace Translator.Design.Connector.Clients
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        /// <exception cref="Exception"></exception>
         public async Task<string?> Translate(string input)
         {
-            var payload = new
-            {
-                model = _routerConfig.Model,
-                messages = new[]
-                    {
-                    new { role = "system", content = _routerConfig.Prompt },
-                    new { role = "user", content = input }
-                }
-            };
+            List<ChatMessage> messages =
+            [
+                new(Microsoft.Extensions.AI.ChatRole.System, _routerConfig.Prompt),
+                new(Microsoft.Extensions.AI.ChatRole.User, input)
+            ];
 
-            HttpResponseMessage response = await _httpClient.PostAsync("api/v1/chat/completions",
-                new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
-
-            if (!response.IsSuccessStatusCode)
-                throw new Exception($"OpenRouter Error: {response.StatusCode}\n{await response.Content.ReadAsStringAsync()}");
-
-            using JsonDocument jsonDocument = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-
-            return jsonDocument.RootElement.GetProperty("choices")[0]
-                .GetProperty("message").GetProperty("content").GetString();
+            ChatResponse response = await _chatClient.GetResponseAsync(messages);
+            return response.Messages.FirstOrDefault()?.Text ?? "No response";
         }
 
         #endregion Methods
