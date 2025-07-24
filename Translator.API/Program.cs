@@ -1,23 +1,23 @@
 using Scalar.AspNetCore;
-using Translator.Design.Application.IRepositories;
 using Translator.Design.Application.IServices;
 using Translator.Design.Application.Services;
-using Translator.Design.Infrastracture.Repositories;
+using Translator.Design.Infrastracture.DependencyInjection;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.RegisterExternalServices(builder.Configuration);
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Add CORS to allow Blazor to access the API
+// Add CORS to allow Blazor accessing the API
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(builder.Configuration["BlazorBaseUrl"]?.ToString() ?? string.Empty)
+        policy.WithOrigins(builder.Configuration["BlazorBaseAddress"]?.ToString() ?? string.Empty)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -25,7 +25,6 @@ builder.Services.AddCors(options =>
 
 // Dependency Injection
 builder.Services.AddScoped<ITranslateService, TranslateService>();
-builder.Services.AddScoped<ITranslateRepository, TranslateRepository>();
 
 WebApplication app = builder.Build();
 

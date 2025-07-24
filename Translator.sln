@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Translator.Design.Infrastra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Translator.Design.Application", "Translator.Design\Translator.Design.Application\Translator.Design.Application.csproj", "{06E36A9A-FAE4-5809-C77D-554B1F2FC63C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Translator.Design.Connector", "Translator.Design\Translator.Design.Connector\Translator.Design.Connector.csproj", "{C9BEAE5C-8921-546B-40A7-D78634F9313B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,10 @@ Global
 		{06E36A9A-FAE4-5809-C77D-554B1F2FC63C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06E36A9A-FAE4-5809-C77D-554B1F2FC63C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06E36A9A-FAE4-5809-C77D-554B1F2FC63C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9BEAE5C-8921-546B-40A7-D78634F9313B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9BEAE5C-8921-546B-40A7-D78634F9313B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9BEAE5C-8921-546B-40A7-D78634F9313B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9BEAE5C-8921-546B-40A7-D78634F9313B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -49,6 +55,7 @@ Global
 		{04AE8B95-6FE1-4E35-B9CC-BF704860E6FF} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{4BCBD792-9A02-4491-B748-AC6BF2231A0B} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{06E36A9A-FAE4-5809-C77D-554B1F2FC63C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{C9BEAE5C-8921-546B-40A7-D78634F9313B} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C97A75BD-CF4C-4E02-999C-98FB7A8A8640}

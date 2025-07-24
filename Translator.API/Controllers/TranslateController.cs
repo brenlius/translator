@@ -32,7 +32,7 @@ namespace Translator.API.Controllers
                 return BadRequest("Input is required.");
 
             TranslateRes response = await _translateService.Translate(request.Input);
-            
+
             if (response == null)
                 return NotFound("Translation not found.");
 
